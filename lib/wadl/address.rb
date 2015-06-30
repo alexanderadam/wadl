@@ -92,11 +92,12 @@ module WADL
       # Bind variables found in the path fragments.
       path_params_to_delete = []
 
-      path_fragments.each { |fragment|
-        if fragment.respond_to?(:to_str)
+      path_fragments.each do |fragment|
+        if fragment.respond_to? :to_s
           # This fragment is a string which might contain {} substitutions.
           # Make any substitutions available to the provided path variables.
-          self.class.embedded_param_names(fragment).each { |name|
+          self.class.embedded_param_names(fragment).each do |name|
+            raise ArgumentError, "Path value #{name} is missing" unless path_var_values.stringify_keys.include? name.to_s
             value = path_var_values[name] || path_var_values[name.to_sym]
 
             value = if param = path_params[name]
@@ -107,13 +108,13 @@ module WADL
             end
 
             fragment.gsub!("{#{name}}", value)
-          }
+          end
         else
           # This fragment is an array of Param objects (style 'matrix'
           # or 'plain') which may be bound to strings. As substitutions
           # happen, the array will become a mixed array of Param objects
           # and strings.
-          fragment.each_with_index { |param, i|
+          fragment.each_with_index do |param, i|
             next unless param.respond_to?(:name)
 
             name = param.name
@@ -123,19 +124,19 @@ module WADL
             fragment[i] = value if value
 
             path_params_to_delete << param
-          }
+          end
         end
-      }
+      end
 
       # Delete any embedded path parameters that are now bound from
       # our list of unbound parameters.
       path_params_to_delete.each { |p| path_params.delete(p.name) }
 
       # Bind query variable values to query parameters
-      query_var_values.each { |name, value|
+      query_var_values.each_pair do |name, value|
         param = query_params.delete(name.to_s)
         query_vars << param % value if param
-      }
+      end
 
       # Bind header variables to header parameters
       header_var_values.each { |name, value|
@@ -158,8 +159,8 @@ module WADL
       obj, uri = deep_copy.bind!(args), ''
 
       # Build the path
-      obj.path_fragments.flatten.each { |fragment|
-        if fragment.respond_to?(:to_str)
+      obj.path_fragments.flatten.each do |fragment|
+        if fragment.respond_to? :to_s
           embedded_param_names = self.class.embedded_param_names(fragment)
 
           unless embedded_param_names.empty?
@@ -167,14 +168,15 @@ module WADL
           end
 
           unless fragment.empty?
-            uri << '/' unless uri.empty? || uri =~ /\/\z/
+            uri << '/' if !uri.empty? && !uri.end_with?('/')
+            fragment.sub! %r{/}, '' unless uri.empty?
             uri << fragment
           end
         elsif fragment.required?
           # This is a required Param that was never bound to a value.
           raise ArgumentError, %Q{Missing a value for required path parameter "#{fragment.name}"!}
         end
-      }
+      end
 
       # Hunt for required unbound query parameters.
       obj.query_params.each { |name, value|

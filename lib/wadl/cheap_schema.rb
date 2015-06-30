@@ -198,7 +198,13 @@ module WADL
           @required_attributes.each { |name|
             name = name.to_s
 
-            raise ArgumentError, %Q{Missing required attribute "#{name}" in element: #{element}} unless attributes[name]
+            unless attributes[name]
+              if self == WADL::HTTPMethod && name == 'id' && parent.path
+                attributes[name] = parent.generate_id
+              else
+                raise ArgumentError, %Q{Missing required attribute "#{name}" in element: #{element}}
+              end
+            end
 
             me.attributes[name] = attributes[name]
             me.index_key = attributes[name] if name == @index_attribute

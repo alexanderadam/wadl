@@ -43,6 +43,12 @@ module WADL
       super
     end
 
+    def generate_id
+      fragments = address.path_fragments
+      fragments.shift
+      fragments.join('').to_s.downcase.gsub(/\W/, '_').sub(/\A_+/, '').sub(/_+\z/, '')
+    end
+
     def resource_and_address(child = self, *args)
       ResourceAndAddress.new(child, *args)
     end
@@ -99,7 +105,7 @@ module WADL
       new_path_fragments = []
       embedded_param_names = Set.new(Address.embedded_param_names(path))
 
-      params.each { |param|
+      params.each do |param|
         name = param.name
 
         if embedded_param_names.include?(name)
@@ -114,7 +120,7 @@ module WADL
             working_address.path_params[name] = param
           end
         end
-      }
+      end
 
       working_address.path_fragments << new_path_fragments unless new_path_fragments.empty?
 

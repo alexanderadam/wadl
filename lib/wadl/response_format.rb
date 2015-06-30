@@ -47,9 +47,10 @@ module WADL
         # Try to match the response to a response format using a media
         # type.
         response_media_type = http_response.content_type
+        response_format = nil
         response_format = representations.find { |f|
           t = f.dereference.mediaType and response_media_type.index(t) == 0
-        }
+        } if response_media_type
 
         # If an exact media type match fails, use the mime-types gem to
         # match the response to a response format using the underlying

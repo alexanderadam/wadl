@@ -42,7 +42,7 @@ module WADL
       query_values  = args[:query]   || {}
       header_values = args[:headers] || {}
 
-      params.each { |param|
+      params.each do |param|
         name = param.name
 
         if param.style == 'header'
@@ -56,7 +56,7 @@ module WADL
 
           uri.query << value if value && !value.empty?
         end
-      }
+      end
 
       uri
     end
